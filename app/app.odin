@@ -41,10 +41,11 @@ run :: proc(t: ^thread.Thread) {
     appState.current_frame = avutil.frame_alloc()
     //texture := rl.LoadTextureFromImage(image)
     //rl.SetTargetFPS(60)
-    rl.SetTraceLogLevel(rl.TraceLogLevel.WARNING)
+    rl.SetTraceLogLevel(rl.TraceLogLevel.DEBUG)
 
     vid_ctx:VideofileContext
-    open_video_file(&vid_ctx, ASSETS_DIR + `countdown.avi`)
+    open_video_file(&vid_ctx, ASSETS_DIR + `countdown_raw.avi`)
+    shader := rl.LoadShader(nil, rl.TextFormat("shaders/yuva2rgba.glsl"))
 
     finished := false
     frame_rate := avutil.q2d(vid_ctx.format_ctx.streams[vid_ctx.vid_stream_idx].avg_frame_rate)
@@ -81,7 +82,10 @@ run :: proc(t: ^thread.Thread) {
                     texture = rl.LoadTextureFromImage(img)
                 }
             }
-            rl.DrawTextureEx(texture, player_pos, 0.0, 0.2, rl.WHITE)
+
+            //rl.BeginShaderMode(shader)
+                rl.DrawTextureEx(texture, player_pos, 0.0, 0.2, rl.WHITE)
+            //rl.EndShaderMode()
         }
 
         rl.EndDrawing()
@@ -128,7 +132,7 @@ open_video_file :: proc(vidstruct:^VideofileContext,f_input:cstring){
 
 grab_video_frame :: proc(vid_ctx:^VideofileContext) -> (finished: bool){
     packet := avcodec.packet_alloc()
-    defer avcodec.packet_free(&packet)
+    defer avcodec.packet_free(&packet) // TODO: maybe reuse?
 
     response:i32
     cerr:i32
