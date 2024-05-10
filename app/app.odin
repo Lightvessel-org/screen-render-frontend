@@ -14,6 +14,8 @@ import thread "core:thread"
 
 import rl "vendor:raylib"
 
+import "commands"
+
 ASSETS_DIR :: `assets/`
 
 VideofileContext :: struct{
@@ -32,7 +34,7 @@ AppState :: struct{
 //global
 appState:AppState
 
-run :: proc(t: ^thread.Thread) {
+start_gui :: proc(t: ^commands.CommandQueue) {
     rl.InitWindow(1280, 720, "My Game")
     //rl.ToggleBorderlessWindowed()
     player_pos := rl.Vector2 { 640, 320}
