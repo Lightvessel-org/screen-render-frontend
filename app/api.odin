@@ -15,17 +15,28 @@ start :: proc() {
     render_thread.user_args[0] = &command_queue
     thread.start(render_thread)
 
-    fmt.println("\n# Starting GUI")
-    thread.start(render_thread)
-    counter :u32 = 0
+    time.sleep(100 * time.Millisecond)
+    
+    devtools_thread := thread.create(run_devtools_thread)
+    devtools_thread.user_args[0] = &command_queue
+    thread.start(devtools_thread)
+
     for ;!thread.is_done(render_thread); {
         // Feed commands
-        time.sleep(10 * time.Millisecond)
+        time.sleep(100 * time.Millisecond)
     }
+    thread.destroy(devtools_thread)
+    thread.destroy(render_thread)
 }
 
 @(private)
 run_render_thread :: proc(t: ^thread.Thread) {
     comms := (^commands.CommandQueue)(&t.user_args[0])^
-    start_gui(&comms)
+    start_presenter(&comms)
+}
+
+@(private)
+run_devtools_thread :: proc(t: ^thread.Thread) {
+    comms := (^commands.CommandQueue)(&t.user_args[0])^
+    start_devtools(&comms)
 }
