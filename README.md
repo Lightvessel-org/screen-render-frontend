@@ -1,8 +1,18 @@
 ## PrecioLed Frontend
 
-#### Compilar y ejecutar:
+### Compilar y ejecutar:
+
+#### Developer Tools
 
 `make run`
+
+#### Generar Windows DLLs
+
+`make windows`
+
+#### Ejecutar Demo .NET
+
+Abrir el proyecto .NET que se encuentra dentro de `demo/DemoNET` y compilarlo con Visual Studio.
 
 #### Generación Assets
 
