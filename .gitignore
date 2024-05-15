@@ -1,2 +1,6 @@
 assets/*
 _assets/*
+example/*
+demo/DemoNET/.vs
+demo/DemoNET/DemoNET/bin
+demo/DemoNET/DemoNET/obj

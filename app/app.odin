@@ -3,6 +3,7 @@ package app
 import "core:fmt"
 import SDL "vendor:sdl2"
 import "commands"
+import "entities"
 
 import glm "core:math/linalg/glsl"
 import "core:time"
@@ -26,10 +27,11 @@ VideofileContext :: struct{
 }
 
 AppState :: struct{
-    current_frame:^types.Frame
+    current_frame:^types.Frame,
+    images: [dynamic]entities.ImageEntity,
 }
 
-start_presenter :: proc(t: ^commands.CommandQueue) {
+start_presenter :: proc(command_queue: ^commands.CommandQueue) {
     state:AppState
 
 	WINDOW_WIDTH  :: 854
@@ -45,6 +47,8 @@ start_presenter :: proc(t: ^commands.CommandQueue) {
 	}
 	defer SDL.DestroyWindow(window)
 
+    SDL.SetWindowBordered(window, false)
+
 	// high precision timer
 	start_tick := time.tick_now()
 
@@ -57,7 +61,7 @@ start_presenter :: proc(t: ^commands.CommandQueue) {
 			info: SDL.RendererInfo
 			if err := SDL.GetRenderDriverInfo(i, &info); err == 0 {
 				// NOTE(bill): "direct3d" seems to not work correctly
-				if info.name == "opengl" {
+				if info.name == "direct3d" {
 					backend_idx = i
 					break
 				}
@@ -104,6 +108,12 @@ start_presenter :: proc(t: ^commands.CommandQueue) {
 			}
 		}
 
+        commands, ok := commands.dequeue_all(command_queue)
+        if ok {
+            process_commands(commands, &state)
+        }
+        update(&state)
+
         frame_duration := time.duration_seconds(time.diff(curr_time,time.now()))
 
         fmt.println("Elapsed duration: ", t, "                 ", video_duration)
@@ -113,15 +123,46 @@ start_presenter :: proc(t: ^commands.CommandQueue) {
         if !finished && frame_duration >= 1/frame_rate{
             curr_time = time.now()
             finished = grab_video_frame(&vid_ctx, &state)
-            if(!finished) {
-                data := state.current_frame.data[0]
-                render_sdl_texture(state.current_frame, renderer)
-                SDL.RenderPresent(renderer)
-            } else {
-                fmt.println("Video Finished")
-            }
         } else {
-            SDL.Delay(10) // If there is nothing to process, we should add a small delay in order to prevent 
+            SDL.Delay(10) // Needed in order for other windows to not get SDL event starvation
         }
+
+        if(!finished) {
+            data := state.current_frame.data[0]
+            render_sdl_texture(state.current_frame, renderer)
+        } else {
+            fmt.println("Video Finished")
+        }
+
+        SDL.RenderPresent(renderer)
 	}
+}
+
+update :: proc(state:^AppState) {
+
+}
+
+process_commands :: proc(comms: []commands.LedCommand, state:^AppState) {
+    for command in comms {
+        switch t in command {
+            case commands.CreateImage:
+                c := command.(commands.CreateImage)
+                create_image(&c, state)
+            case commands.DeleteImage:
+                c := command.(commands.DeleteImage)
+                delete_image(&c, state)
+        }
+    }
+}
+
+create_image :: proc(c:^commands.CreateImage, state:^AppState) {
+    append(&state.images, entities.ImageEntity {
+        label = c.label,
+        file = c.resource,
+        pos = c.pos,
+    })
+}
+
+delete_image :: proc(c:^commands.DeleteImage, state:^AppState) {
+    // TODO
 }

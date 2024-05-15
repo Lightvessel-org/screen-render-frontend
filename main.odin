@@ -6,6 +6,10 @@ import "core:time"
 import "core:mem"
 
 main :: proc() {
+	start_led()
+}
+
+start_led :: proc() {
 	track: mem.Tracking_Allocator
 	mem.tracking_allocator_init(&track, context.allocator)
 	defer mem.tracking_allocator_destroy(&track)
