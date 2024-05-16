@@ -1,5 +1,6 @@
 package commands
 import "core:sync"
+import "core:fmt"
 
 
 CommandQueue :: struct {
@@ -27,6 +28,13 @@ dequeue_all :: proc(queue: ^CommandQueue) -> (elements: []LedCommand, succeeded:
 	}
 
 	return elements, succeeded
+}
+
+peek :: proc(queue: ^CommandQueue){
+	sync.mutex_lock(&queue.lock)
+    defer sync.mutex_unlock(&queue.lock)
+
+	fmt.printfln("Queue size: ", len(queue.queue))
 }
 
 enqueue ::proc(queue: ^CommandQueue, command: LedCommand) {

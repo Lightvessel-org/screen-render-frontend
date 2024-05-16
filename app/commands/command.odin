@@ -6,19 +6,19 @@ command_e :: enum {
     MODIFY,
 }
 
-LedCommand :: union #no_nil {
+LedCommand :: union {
     CreateImage,
-    DeleteImage,
+    DeleteImage
 }
 
 CreateImage :: struct {
-    label: string,
+    id: i32,
     pos: [2]f32,
     size: [2]f32,
     resource: string,
 }
 
 DeleteImage :: struct {
-    label: string,
+    id: i32,
 }
 

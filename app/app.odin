@@ -60,7 +60,6 @@ start_presenter :: proc(command_queue: ^commands.CommandQueue) {
 		for i in 0..<n {
 			info: SDL.RendererInfo
 			if err := SDL.GetRenderDriverInfo(i, &info); err == 0 {
-				// NOTE(bill): "direct3d" seems to not work correctly
 				if info.name == "direct3d" {
 					backend_idx = i
 					break
@@ -76,17 +75,6 @@ start_presenter :: proc(command_queue: ^commands.CommandQueue) {
 	}
 	defer SDL.DestroyRenderer(renderer)
 
-    vid_ctx:VideofileContext
-
-    open_video_file(&vid_ctx, ASSETS_DIR + `countdown_raw.avi`)
-    
-
-    state.current_frame = avutil.frame_alloc()
-    finished := false
-    frame_rate := avutil.q2d(vid_ctx.format_ctx.streams[vid_ctx.vid_stream_idx].avg_frame_rate)
-    curr_time := time.now()
-    elapsed_duration:f64 = 0.0
-    video_duration:f32 = f32(vid_ctx.format_ctx.duration) / 1_000_000
 	loop: for {
 		duration := time.tick_since(start_tick)
 		t := f32(time.duration_seconds(duration))
@@ -108,31 +96,11 @@ start_presenter :: proc(command_queue: ^commands.CommandQueue) {
 			}
 		}
 
-        commands, ok := commands.dequeue_all(command_queue)
+        comms, ok := commands.dequeue_all(command_queue)
         if ok {
-            process_commands(commands, &state)
+            process_commands(comms, &state)
         }
         update(&state)
-
-        frame_duration := time.duration_seconds(time.diff(curr_time,time.now()))
-
-        fmt.println("Elapsed duration: ", t, "                 ", video_duration)
-        if(t > video_duration) {
-            finished = true
-        }
-        if !finished && frame_duration >= 1/frame_rate{
-            curr_time = time.now()
-            finished = grab_video_frame(&vid_ctx, &state)
-        } else {
-            SDL.Delay(10) // Needed in order for other windows to not get SDL event starvation
-        }
-
-        if(!finished) {
-            data := state.current_frame.data[0]
-            render_sdl_texture(state.current_frame, renderer)
-        } else {
-            fmt.println("Video Finished")
-        }
 
         SDL.RenderPresent(renderer)
 	}
@@ -143,26 +111,25 @@ update :: proc(state:^AppState) {
 }
 
 process_commands :: proc(comms: []commands.LedCommand, state:^AppState) {
-    for command in comms {
-        switch t in command {
+    if len(comms) > 0 {
+        fmt.printfln("Processing Commands")
+    }
+    for c in comms {
+        switch _ in c {
+			case commands.DeleteImage:
+				c := c.(commands.DeleteImage)
+                on_delete_image(&c, state)
             case commands.CreateImage:
-                c := command.(commands.CreateImage)
-                create_image(&c, state)
-            case commands.DeleteImage:
-                c := command.(commands.DeleteImage)
-                delete_image(&c, state)
+                c := c.(commands.CreateImage)
+                on_create_image(&c, state)
         }
     }
 }
 
-create_image :: proc(c:^commands.CreateImage, state:^AppState) {
-    append(&state.images, entities.ImageEntity {
-        label = c.label,
-        file = c.resource,
-        pos = c.pos,
-    })
+on_create_image :: proc(c:^commands.CreateImage, state:^AppState) {
+    fmt.printfln("Create Image command. ID=%d", c.id)
 }
 
-delete_image :: proc(c:^commands.DeleteImage, state:^AppState) {
-    // TODO
+on_delete_image :: proc(c:^commands.DeleteImage, state:^AppState) {
+    fmt.printfln("Delete Image command. ID=%d", c.id)
 }
