@@ -14,33 +14,44 @@ create_queue :: proc() -> CommandQueue {
     };
 }
 
-dequeue_all :: proc(queue: ^CommandQueue) -> (elements: []LedCommand, succeeded: bool) {
+dequeue :: proc(queue: ^CommandQueue) -> (element: LedCommand, succeeded: bool) {
 	if sync.mutex_try_lock(&queue.lock) {
 		defer sync.mutex_unlock(&queue.lock)
-
-		elements = queue.queue[:]
-		delete(queue.queue)
-
-        queue.queue = make([dynamic]LedCommand)
-		succeeded = true
+		if(len(queue.queue) > 0) {
+			element = pop(&queue.queue)
+			succeeded = true
+		} else {
+			succeeded = false
+		}
 	} else {
 		succeeded = false
 	}
 
-	return elements, succeeded
+	return element, succeeded
 }
 
-peek :: proc(queue: ^CommandQueue){
-	sync.mutex_lock(&queue.lock)
-    defer sync.mutex_unlock(&queue.lock)
+peek :: proc(queue: ^CommandQueue) -> (element: LedCommand, succeeded: bool) {
+	if sync.mutex_try_lock(&queue.lock) {
+		defer sync.mutex_unlock(&queue.lock)
+		size := len(queue.queue)
+		if(size > 0) {
+			return queue.queue[size - 1], true
+			succeeded = true
+		} else {
+			succeeded = false
+		}
+	} else {
+		succeeded = false
+	}
 
-	fmt.printfln("Queue size: ", len(queue.queue))
+	return element, succeeded
 }
 
 enqueue ::proc(queue: ^CommandQueue, command: LedCommand) {
     sync.mutex_lock(&queue.lock)
     defer sync.mutex_unlock(&queue.lock)
     append(&queue.queue, command)
+	fmt.printfln("Enqueued: ", command, " TOTAL SIZE: ", len(queue.queue))
 }
 
 delete_queue :: proc(queue: ^CommandQueue) {

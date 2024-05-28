@@ -96,10 +96,9 @@ start_presenter :: proc(command_queue: ^commands.CommandQueue) {
 			}
 		}
 
-        comms, ok := commands.dequeue_all(command_queue)
-        if ok {
-            process_commands(comms, &state)
-        }
+
+        process_commands(command_queue, &state)
+        
         update(&state)
 
         SDL.RenderPresent(renderer)
@@ -110,20 +109,19 @@ update :: proc(state:^AppState) {
 
 }
 
-process_commands :: proc(comms: []commands.LedCommand, state:^AppState) {
-    if len(comms) > 0 {
-        fmt.printfln("Processing Commands")
-    }
-    for c in comms {
-        switch _ in c {
+process_commands :: proc(command_queue: ^commands.CommandQueue, state:^AppState) {
+	comm, ok := commands.dequeue(command_queue)
+	if ok {
+		fmt.printfln("Command parsed:", comm)
+        #partial switch _ in comm {
+			case commands.CreateImage:
+                comm := comm.(commands.CreateImage)
+                on_create_image(&comm, state)
 			case commands.DeleteImage:
-				c := c.(commands.DeleteImage)
-                on_delete_image(&c, state)
-            case commands.CreateImage:
-                c := c.(commands.CreateImage)
-                on_create_image(&c, state)
+				comm := comm.(commands.DeleteImage)
+                on_delete_image(&comm, state)
         }
-    }
+	}
 }
 
 on_create_image :: proc(c:^commands.CreateImage, state:^AppState) {

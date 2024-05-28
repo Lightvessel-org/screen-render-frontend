@@ -5,6 +5,7 @@ run:
 	odin build . -out:output/run.exe -show-system-calls -debug
 	./output/run.exe
 
-make python_demo:
+make vb:
 	make windows
-	python demo/DemoNET/DemoNET/bin/Debug/net8.0/demo.py
+	cp ./output/*.dll ./demo/VBConsoleAppDemo/bin/Debug/net8.0
+	dotnet build demo/VBConsoleAppDemo
