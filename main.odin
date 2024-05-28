@@ -6,6 +6,10 @@ import "core:time"
 import "core:mem"
 import "core:thread"
 
+/**
+* SOLO PARA TESTEO
+* Este backend por terminal reemplaza al backend de visual basic
+**/
 main :: proc() {
 	start_led()
 }
@@ -28,7 +32,6 @@ start_led :: proc() {
     }
     thread.destroy(t)
 
-    // TODO: remove for prod
 	for _, leak in track.allocation_map {
 		fmt.printf("%v leaked %m\n", leak.location, leak.size)
 	}

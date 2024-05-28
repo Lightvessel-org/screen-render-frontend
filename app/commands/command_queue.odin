@@ -35,7 +35,7 @@ peek :: proc(queue: ^CommandQueue) -> (element: LedCommand, succeeded: bool) {
 		defer sync.mutex_unlock(&queue.lock)
 		size := len(queue.queue)
 		if(size > 0) {
-			return queue.queue[size - 1], true
+			element = queue.queue[size - 1]
 			succeeded = true
 		} else {
 			succeeded = false
@@ -50,8 +50,7 @@ peek :: proc(queue: ^CommandQueue) -> (element: LedCommand, succeeded: bool) {
 enqueue ::proc(queue: ^CommandQueue, command: LedCommand) {
     sync.mutex_lock(&queue.lock)
     defer sync.mutex_unlock(&queue.lock)
-    append(&queue.queue, command)
-	fmt.printfln("Enqueued: ", command, " TOTAL SIZE: ", len(queue.queue))
+	inject_at(&queue.queue, 0, command)
 }
 
 delete_queue :: proc(queue: ^CommandQueue) {
