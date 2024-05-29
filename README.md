@@ -2,9 +2,11 @@
 
 ### Compilar y ejecutar:
 
+Para compilar local, requiere tener instalado Odin https://odin-lang.org/
+
 #### Developer Tools
 
-`make run`
+`make dev`
 
 #### Generar Windows DLLs
 
@@ -13,6 +15,7 @@
 #### Ejecutar Demo .NET
 
 Abrir el proyecto .NET que se encuentra dentro de `demo/DemoNET` y compilarlo con Visual Studio.
+Para recompilar todo el proyecto y ejecutarlo desde línea de comando, se puede usar: `make run`
 
 #### Generación Assets
 
