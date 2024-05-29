@@ -22,14 +22,14 @@ start_led :: proc() {
 
 	t := app.start()
 	counter := 0
+
+	app.create_image("golden_ball.png", 0.0, 0.0, 0.5)
+
 	for ;!thread.is_done(t); {
         // Feed commands
         time.sleep(100 * time.Millisecond)
-		if counter < 5 {
-			app.delete_image(123)
-		}
-		counter += 1
     }
+	
     thread.destroy(t)
 
 	for _, leak in track.allocation_map {

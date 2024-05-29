@@ -128,6 +128,7 @@ start_devtools :: proc(t: ^commands.CommandQueue) {
 	}
 }
 
+@(private="file")
 render :: proc(ctx: ^mu.Context, renderer: ^SDL.Renderer) {
 	render_texture :: proc(renderer: ^SDL.Renderer, dst: ^SDL.Rect, src: mu.Rect, color: mu.Color) {
 		dst.w = src.w

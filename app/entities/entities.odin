@@ -1,42 +1,27 @@
 package entities
+import rl "vendor:raylib"
 
-/*
-
-*/
-
-ImageEntity :: struct {
-    label: string,
-    file: string,
-    pos:[2]f32,
+Instance :: struct {
+    id: i32,
+    entity:Entity,
+    status: Status,
+    position: rl.Vector2, 
+    rotation: f32, 
+    scale: f32, 
+    z: int,
 }
 
+Entity :: union {
+    ImageEntity
+}
 
-//entity_tag :: enum {
-//   POSITION,
-//   SCALE,
-//   IMAGE_RESOURCE,
-//
-//
-//ntity :: struct{
-//   id:  u32,
-//   components: bit_set[entity_tag; u32],
-//
+ImageEntity :: struct {
+    texture: rl.Texture2D,
+    tint: rl.Color
+}
 
-// main :: proc() {
-//     ent: entity_t
-// 
-//     showbits(ent.components)
-//     ent.components += {.RENDER2D}
-//     showbits(ent.components)
-// 
-//     fmt.println((hasComponent(ent, .POSITION)) ? "can move" : "cannot move")
-// 
-//     ent.components += {.POSITION}
-//     showbits(ent.components)
-// 
-//     fmt.println((hasComponent(ent, .POSITION)) ? "can move" : "cannot move")
-// }
-// [12:53 PM]
-// showbits :: proc(x: bit_set[components_e; u32]) {
-//     fmt.println(x)
-// }
+Status :: enum {
+    NEEDS_TO_LOAD,
+    LOADING,
+    LOADED
+}

@@ -8,7 +8,10 @@ Public Class LedApi
     Private Property hModule As Long
     Private Const LedFrontendDLL = "LedFrontend.dll"
 
-    Private Declare Function LoadLibrary Lib "kernel32" Alias "LoadLibraryA" (ByVal lpLibFileName As String) As Long
+    <DllImport("kernel32.dll", SetLastError:=True, CharSet:=CharSet.Unicode)>
+    Private Shared Function LoadLibrary(ByVal lpLibFileName As String) As Long
+    End Function
+
     Private Declare Function GetProcAddress Lib "kernel32" (ByVal hModule As Long, ByVal lpProcName As String) As Long
     Private Declare Function FreeLibrary Lib "kernel32" (ByVal hModule As Long) As Long
 
@@ -16,11 +19,14 @@ Public Class LedApi
     Public Delegate Function RunPrecioledDelegate() As Integer
     Public RunPrecioled As RunPrecioledDelegate
 
-    Public Delegate Function CreateImageDelegate() As Integer
+    Public Delegate Function CreateImageDelegate(file As String, posX As Single, posY As Single, scale As Single) As Integer
     Public CreateImage As CreateImageDelegate
 
     Public Delegate Function DeleteImageDelegate(id As Integer) As Integer
     Public DeleteImage As DeleteImageDelegate
+
+    Public Delegate Function MoveDelegate(id As Integer, posX As Single, posY As Single) As Integer
+    Public Move As MoveDelegate
 
     Public Sub New()
         hModule = LedApi.LoadLibrary(LedFrontendDLL)
@@ -29,9 +35,10 @@ Public Class LedApi
             Exit Sub
         End If
 
-        RunPrecioled = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("run_precioled")), GetType(RunPrecioledDelegate)), RunPrecioledDelegate)
-        CreateImage = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("create_image")), GetType(CreateImageDelegate)), CreateImageDelegate)
-        DeleteImage = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("delete_image")), GetType(DeleteImageDelegate)), DeleteImageDelegate)
+        RunPrecioled = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("run_precioled")), GetType(RunPrecioledDelegate)),  RunPrecioledDelegate)
+        CreateImage  = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("create_image")),  GetType(CreateImageDelegate)),   CreateImageDelegate)
+        DeleteImage  = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("delete_image")),  GetType(DeleteImageDelegate)),   DeleteImageDelegate)
+        Move         = CType(Marshal.GetDelegateForFunctionPointer(New IntPtr(Fetch("move")),          GetType(MoveDelegate)),          MoveDelegate)
 
     End Sub
 
@@ -61,11 +68,11 @@ Module Program
         result = api.RunPrecioled()
         Console.WriteLine("Started Frontend: " & result)
         Console.ReadLine()
-        api.CreateImage()
-        api.DeleteImage(123)
-        api.CreateImage()
+        Dim imageId As Integer
+        imageId = api.CreateImage("assets/golden_ball.png", 200.0, 200.0, 0.2) 'Path relativo al exe
+        Console.WriteLine("Imagen creada con ID=" & imageId)
         Console.ReadLine()
-        api.CreateImage()
+        api.Move(imageId, 0.0, 0.0)
         Console.ReadLine()
     End Sub
 End Module
