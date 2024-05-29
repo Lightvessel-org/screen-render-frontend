@@ -42,10 +42,10 @@ version :: proc "c" () -> i32 {
 	return 100
 }
 
-counter: i32 = 0
+counter: int = 0
 
 @(export)
-create_image :: proc "c" (filename: cstring, posX: f32, posY: f32, scale: f32) -> i32 {
+create_image :: proc "c" (filename: cstring, posX: f32, posY: f32, scale: f32) -> int {
 	context = runtime.default_context()
 	counter += 1
 	command := commands.CreateImage {
@@ -59,7 +59,7 @@ create_image :: proc "c" (filename: cstring, posX: f32, posY: f32, scale: f32) -
 }
 
 @(export)
-move :: proc "c" (id: i32, posX: f32, posY: f32) -> i32 {
+move :: proc "c" (id: int, posX: f32, posY: f32) -> i32 {
 	context = runtime.default_context()
 	counter += 1
 	command := commands.Move {
@@ -71,7 +71,7 @@ move :: proc "c" (id: i32, posX: f32, posY: f32) -> i32 {
 }
 
 @(export)
-delete_image :: proc "c" (id: i32) -> i32 {
+delete_image :: proc "c" (id: int) -> i32 {
 	context = runtime.default_context()
 	fmt.println("Delete Image called")
 	command := commands.DeleteImage {

@@ -37,7 +37,7 @@ Window :: struct {
 
 AppState :: struct {
 	current_frame: ^types.Frame,
-	instances:     [dynamic]entities.Instance,
+	world:         entities.World,
 }
 
 start_presenter :: proc(command_queue: ^commands.CommandQueue) {
@@ -54,27 +54,39 @@ start_presenter :: proc(command_queue: ^commands.CommandQueue) {
 
 	for !rl.WindowShouldClose() {
 		process_commands(command_queue, &state)
-		update(&state)
+		update(&state.world)
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.PINK)
-		render(&state)
+		render(&state.world)
 		rl.EndDrawing()
 	}
 }
 
 @(private = "file")
-update :: proc(state: ^AppState) {
-	for instance, index in state.instances {
-		// TODO: run animations
+update :: proc(world: ^entities.World) {
+	for easing, idx in world.easings {
+		if easing.elapsed < easing.duration {
+			instance := &world.instances[easing.target_id]
+			progress := easing.fn(easing.elapsed, 0.0, 1.0, easing.duration)
+			world.easings[idx].elapsed += rl.GetFrameTime()
+			instance.position = easing.start_value + (easing.start_value - easing.end_value) * progress
+		}
+		// TODO: clean finished animations
 	}
 }
 
 @(private = "file")
-render :: proc(state: ^AppState) {
-	for instance, index in state.instances {
+render :: proc(world: ^entities.World) {
+	for key, &instance in world.instances {
 		#partial switch entity in instance.entity {
 		case entities.ImageEntity:
-			rl.DrawTextureEx(entity.texture, instance.position, instance.rotation, instance.scale, rl.WHITE);
+			rl.DrawTextureEx(
+				entity.texture,
+				instance.position,
+				instance.rotation,
+				instance.scale,
+				rl.WHITE,
+			)
 		}
 	}
 }
@@ -88,60 +100,57 @@ process_commands :: proc(command_queue: ^commands.CommandQueue, state: ^AppState
 
 		case commands.CreateImage:
 			comm := comm.(commands.CreateImage)
-			on_create_image(&comm, state)
+			on_create_image(&comm, &state.world)
 
 		case commands.DeleteImage:
 			comm := comm.(commands.DeleteImage)
-			on_delete_image(&comm, state)
-	
+			on_delete_image(&comm, &state.world)
+
 		case commands.Move:
 			comm := comm.(commands.Move)
-			on_move(&comm, state)
+			on_move(&comm, &state.world)
 
-		}	
+		}
 		// TODO: free command?
 	}
 }
 
-on_create_image :: proc(c: ^commands.CreateImage, state: ^AppState) {
+on_create_image :: proc(c: ^commands.CreateImage, world: ^entities.World) {
 	image := rl.LoadImage(strings.clone_to_cstring(c.resource))
-    texture := rl.LoadTextureFromImage(image)
+	texture := rl.LoadTextureFromImage(image)
 	defer rl.UnloadImage(image)
 
-	append(
-		&state.instances,
-		entities.Instance {
-			id = c.id,
-			entity = entities.ImageEntity{
-				texture = texture,
-				tint = rl.WHITE,
-			},
-			position = c.pos,
-			scale = c.size,
-			rotation = 0.0,
-			status = entities.Status.LOADED,
-			z = 0,
-		},
-	)
-}
-
-on_move :: proc(c: ^commands.Move, state: ^AppState) {
-	instance := find_instancy_by_id(state, c.id)
-	if instance != nil {
-		instance.position = c.pos
+	world.instances[c.id] = entities.Instance {
+		id = c.id,
+		entity = entities.ImageEntity{texture = texture, tint = rl.WHITE},
+		position = c.pos,
+		scale = c.size,
+		rotation = 0.0,
+		status = entities.Status.LOADED,
+		z = 0,
 	}
 }
 
-on_delete_image :: proc(c: ^commands.DeleteImage, state: ^AppState) {
-	fmt.printfln("Delete Image command. ID=%d", c.id)
+on_move :: proc(c: ^commands.Move, world: ^entities.World) {
+	instance, ok := &world.instances[c.id]
+	if ok {
+		append(
+			&world.easings,
+			entities.Easing {
+				target_id= instance.id,
+				property=entities.Property.POSITION,
+				elapsed= 0.0,
+				duration= 1.0,
+				start_value = instance.position,
+				end_value = c.pos,
+				fn= rl.EaseCubicInOut,
+			}
+		)
+	} else {
+		fmt.printfln("on_move FAILED: entity not found ID=", c.id)
+	}
 }
 
-
-find_instancy_by_id :: proc(state: ^AppState, id: i32) -> ^entities.Instance {
-	for instance, idx in state.instances {
-		if instance.id == id {
-			return &state.instances[idx]
-		}
-	}
-	return nil
+on_delete_image :: proc(c: ^commands.DeleteImage, world: ^entities.World) {
+	delete_key(&world.instances, c.id)
 }

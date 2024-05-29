@@ -74,5 +74,7 @@ Module Program
         Console.ReadLine()
         api.Move(imageId, 0.0, 0.0)
         Console.ReadLine()
+        api.Move(imageId, 400.0, 100.0)
+        Console.ReadLine()
     End Sub
 End Module

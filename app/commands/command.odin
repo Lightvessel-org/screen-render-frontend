@@ -7,17 +7,17 @@ LedCommand :: union {
 }
 
 CreateImage :: struct {
-    id: i32,
+    id: int,
     pos: [2]f32,
     size: f32,
     resource: string,
 }
 
 Move :: struct {
-    id: i32,
+    id: int,
     pos: [2]f32,
 }
 
 DeleteImage :: struct {
-    id: i32,
+    id: int,
 }
